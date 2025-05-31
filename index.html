@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <title>দলিল জেনারেটর - কনফিগার</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Noto Sans Bengali', Arial, sans-serif; background: #f6f7fb; margin:0; }
+    h1 { text-align: center; color: #2563eb; margin-top: 18px; font-size: 2rem; }
+    .wizard-container {
+      max-width: 750px; margin: 24px auto 32px auto;
+      background: #fff; border-radius: 14px; box-shadow: 0 6px 24px rgba(37,99,235,0.07), 0 1.5px 4px rgba(0,0,0,0.10);
+      padding: 18px 0 18px 0;
+      animation: popIn 0.8s cubic-bezier(.6,2,.3,1);
+    }
+    @keyframes popIn { from { transform: scale(.92) translateY(25px); opacity: 0;} to   { transform: scale(1) translateY(0); opacity: 1;} }
+    .step-indicator {
+      display: flex; justify-content: space-between; align-items: center; margin: 0 0 28px 0; padding: 0 20px;
+    }
+    .step-dot {
+      flex: 1; text-align: center; position: relative;
+    }
+    .step-dot span {
+      display: inline-block; width: 34px; height: 34px; line-height: 34px; border-radius: 50%; background: #e0e7ff; color: #1e40af; font-weight: 700; font-size: 1.12em; margin-bottom: 6px; border: 2px solid #e0e7ff; transition: all .22s;
+    }
+    .step-dot.active span, .step-dot.completed span {
+      background: #2563eb; color: #fff; border-color: #2563eb;
+    }
+    .step-dot.completed span { background: #fbbf24; color: #1741a6; border-color: #fbbf24; }
+    .step-dot label { display: block; font-size: 0.96em; color: #555; margin-top: 2px;}
+    .step-dot.active label { color: #2563eb; font-weight: 700;}
+    .step-bar {
+      height: 3.5px; background: #e0e7ff; flex: 1 1 18px; margin: 0 0.5px;
+    }
+    .step-dot.completed + .step-bar { background: #2563eb; }
+    .step-card {
+      max-width: 650px; margin: 0 auto; background: #fff;
+      border: 1.5px solid #e5e7eb; border-radius: 14px;
+      box-shadow: 0 2px 8px rgba(37,99,235,0.04);
+      padding: 32px 16px 24px 16px;
+      min-height: 150px;
+      display: none;
+      animation: fadeIn .5s;
+    }
+    .step-card.active { display: block; }
+    @keyframes fadeIn { from {opacity: 0; transform: translateY(25px);} to {opacity: 1; transform: none;} }
+    h2 { color: #1741a6; border-left: 5px solid #fbbf24; padding-left: 12px; font-size: 1.25rem; margin-bottom: 14px; }
+    label { display: block; margin-top: 11px; font-weight: 500; color: #212529; margin-bottom: 3.5px; }
+    input, select {
+      width: 100%; padding: 10px 11px; border: 1.5px solid #e5e7eb; border-radius: 7px; background: #f7fafc;
+      font-family: inherit; font-size: 1rem; transition: border-color 0.22s, box-shadow 0.22s; outline: none;
+    }
+    input:focus, select:focus { border-color: #2563eb; box-shadow: 0 1px 8px rgba(37,99,235,0.08); background: #fff; }
+    .hidden { display: none !important;}
+    .fade-in { display: block !important; animation: fadeIn 0.38s; opacity: 1; }
+    .add-btn { margin-top: 10px; padding: 9px 20px; background: #fbbf24; color: #333; border: none; border-radius: 7px; font-weight: 600; font-size: 1.08em; cursor: pointer; transition: background .2s; }
+    .add-btn:hover { background: #ffe082; }
+    .remove-btn { float: right; background: #f87171; color: #fff; border: none; border-radius: 5px; padding: 4px 13px; font-size: 1.1em; margin-left: 6px; margin-top: -2px; cursor: pointer; transition: background 0.17s; font-weight: 700;}
+    .remove-btn:hover { background: #e11d48; }
+    .btn-row { margin-top: 28px; display: flex; justify-content: space-between; gap: 14px;}
+    .wizard-btn {
+      flex: 1; padding: 12px 0; border: none; border-radius: 14px; font-size: 1.08em; font-weight: 700; letter-spacing: .7px; cursor: pointer;
+      transition: background .18s;
+    }
+    .wizard-btn.next { background: #2563eb; color: #fff; }
+    .wizard-btn.next:hover { background: #1741a6; }
+    .wizard-btn.prev { background: #e5e7eb; color: #1741a6; }
+    .wizard-btn.prev:hover { background: #d1d5db; }
+    .wizard-btn.submit { background: #fbbf24; color: #1741a6;}
+    .wizard-btn.submit:hover { background: #ffe082; }
+
+    /* Horizontal selects for division-district-upazila */
+    .location-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .location-row > div { flex: 1; min-width: 0; }
+    /* Grid for union-village-post */
+    .location-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    /* Progress bar for selects */
+    .progress-bar-wrap {
+      margin: 8px 0 10px 0;
+      width: 100%;
+      height: 8px;
+      background: #e5e7eb;
+      border-radius: 7px;
+      overflow: hidden;
+    }
+    .progress-bar-inner {
+      height: 100%;
+      background: linear-gradient(90deg,#2563eb 60%,#3b82f6 100%);
+      width: 0%;
+      transition: width .4s cubic-bezier(.63,1.6,.38,1.01);
+    }
+
+    /* Responsive */
+    @media (max-width: 700px) {
+      .wizard-container { max-width: 99vw; border-radius: 0; box-shadow: none; padding: 0;}
+      .step-card { max-width: 98vw; border-radius: 0; }
+      .step-indicator { flex-direction: column; gap: 10px;}
+      .step-bar { width: 70vw; max-width: 110px; margin: 0 auto;}
+      .location-row { flex-direction: column; gap: 0;}
+      .location-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 500px) {
+      .step-card { padding: 16px 3vw 18px 3vw; }
+      h1 { font-size: 1.3rem; }
+      .step-dot span { width: 29px; height: 29px; line-height: 29px; font-size: 0.98em;}
+      .step-dot label { font-size: 0.85em;}
+    }
+  </style>
+</head>
+<body>
+  <h1>দলিল জেনারেটর কনফিগারেশন</h1>
+  <div class="wizard-container">
+    <!-- Step Indicator -->
+    <div class="step-indicator" id="stepIndicator">
+      <div class="step-dot active"><span>১</span><label>দাতার তথ্য</label></div>
+      <div class="step-bar"></div>
+      <div class="step-dot"><span>২</span><label>গ্রহিতার তথ্য</label></div>
+      <div class="step-bar"></div>
+      <div class="step-dot"><span>৩</span><label>জমি</label></div>
+      <div class="step-bar"></div>
+      <div class="step-dot"><span>৪</span><label>বন্ধক</label></div>
+    </div>
+    <form id="wizardForm" action="prints.html" method="GET" target="_blank" autocomplete="off">
+      <!-- Step 1: Giver -->
+      <div class="step-card active" data-step="1">
+        <h2>দলিল দাতার তথ্য</h2>
+        <div id="giver_location">
+          <div class="location-row">
+            <div>
+              <label>বিভাগ</label>
+              <select id="giver_division" name="giver_division" required></select>
+            </div>
+            <div>
+              <label>জেলা</label>
+              <select id="giver_district" name="giver_district" required disabled></select>
+            </div>
+            <div>
+              <label>থানা</label>
+              <select id="giver_upazila" name="giver_upazila" required disabled></select>
+            </div>
+          </div>
+          <div class="progress-bar-wrap"><div class="progress-bar-inner" id="giver_location_progress"></div></div>
+          <div class="location-grid hidden" id="giver_grid">
+            <div>
+              <label>ইউনিয়ন</label>
+              <select id="giver_union" name="giver_union" required disabled></select>
+            </div>
+            <div>
+              <label>গ্রাম</label>
+              <select id="giver_village" name="giver_village" required disabled></select>
+            </div>
+            <div>
+              <label>পোস্ট অফিস</label>
+              <select id="giver_post" name="giver_post" required disabled></select>
+            </div>
+          </div>
+        </div>
+        <label>নাম</label>
+        <input type="text" name="giver_name" required placeholder="পূর্ণ নাম লিখুন">
+        <label>পিতার নাম</label>
+        <input type="text" name="giver_father" required placeholder="পিতার নাম লিখুন">
+        <label>ভোটার আইডি নম্বর</label>
+        <input type="text" name="giver_voter" required placeholder="ভোটার নম্বর লিখুন">
+        <div class="btn-row" style="justify-content: flex-end;">
+          <button type="button" class="wizard-btn next" onclick="nextStep()">পরবর্তী</button>
+        </div>
+      </div>
+      <!-- Step 2: Receiver -->
+      <div class="step-card" data-step="2">
+        <h2>দলিল গ্রহিতার তথ্য</h2>
+        <div id="receiver_location">
+          <div class="location-row">
+            <div>
+              <label>বিভাগ</label>
+              <select id="receiver_division" name="receiver_division" required></select>
+            </div>
+            <div>
+              <label>জেলা</label>
+              <select id="receiver_district" name="receiver_district" required disabled></select>
+            </div>
+            <div>
+              <label>থানা</label>
+              <select id="receiver_upazila" name="receiver_upazila" required disabled></select>
+            </div>
+          </div>
+          <div class="progress-bar-wrap"><div class="progress-bar-inner" id="receiver_location_progress"></div></div>
+          <div class="location-grid hidden" id="receiver_grid">
+            <div>
+              <label>ইউনিয়ন</label>
+              <select id="receiver_union" name="receiver_union" required disabled></select>
+            </div>
+            <div>
+              <label>গ্রাম</label>
+              <select id="receiver_village" name="receiver_village" required disabled></select>
+            </div>
+            <div>
+              <label>পোস্ট অফিস</label>
+              <select id="receiver_post" name="receiver_post" required disabled></select>
+            </div>
+          </div>
+        </div>
+        <label>নাম</label>
+        <input type="text" name="receiver_name" required placeholder="পূর্ণ নাম লিখুন">
+        <label>পিতার নাম</label>
+        <input type="text" name="receiver_father" required placeholder="পিতার নাম লিখুন">
+        <label>ভোটার আইডি নম্বর</label>
+        <input type="text" name="receiver_voter" required placeholder="ভোটার নম্বর লিখুন">
+        <div class="btn-row">
+          <button type="button" class="wizard-btn prev" onclick="prevStep()">পূর্ববর্তী</button>
+          <button type="button" class="wizard-btn next" onclick="nextStep()">পরবর্তী</button>
+        </div>
+      </div>
+      <!-- Step 3: Land -->
+      <div class="step-card" data-step="3">
+        <h2>জমির তথ্য</h2>
+        <div id="landFormsContainer"></div>
+        <button type="button" class="add-btn" onclick="addLandForm()">➕ নতুন জমির তথ্য যোগ করুন</button>
+        <div class="btn-row">
+          <button type="button" class="wizard-btn prev" onclick="prevStep()">পূর্ববর্তী</button>
+          <button type="button" class="wizard-btn next" onclick="nextStep()">পরবর্তী</button>
+        </div>
+      </div>
+      <!-- Step 4: Mortgage -->
+      <div class="step-card" data-step="4">
+        <h2>বন্ধক তথ্য</h2>
+        <label>বন্ধকের পরিমাণ (টাকা)</label>
+        <input type="number" name="mortgage_amount" id="mortgage_amount" placeholder="পরিমাণ লিখুন" required min="0">
+        <label>সম্পত্তির বাজার মূল্য (টাকা)</label>
+        <input type="number" name="property_market_value" id="property_market_value" placeholder="বাজার মূল্য লিখুন" required min="0">
+        <label>বন্ধকের সর্বনিম্ন সময় (বছর)</label>
+        <input type="number" name="mortgage_min_duration_years" id="mortgage_min_duration_years" placeholder="বছর লিখুন" required min="1">
+        <div class="btn-row">
+          <button type="button" class="wizard-btn prev" onclick="prevStep()">পূর্ববর্তী</button>
+          <button type="submit" class="wizard-btn submit">দলিল তৈরি করুন</button>
+        </div>
+      </div>
+    </form>
+  </div>
+  <script>
+    // Stepper Logic
+    let currentStep = 1;
+    function showStep(step) {
+      currentStep = step;
+      document.querySelectorAll('.step-card').forEach(card => {
+        card.classList.toggle('active', Number(card.dataset.step) === step);
+      });
+      // Step Indicator
+      const dots = document.querySelectorAll('.step-dot');
+      dots.forEach((dot, idx) => {
+        dot.classList.toggle('active', idx === step - 1);
+        dot.classList.toggle('completed', idx < step - 1);
+      });
+      // Step Bar
+      const bars = document.querySelectorAll('.step-bar');
+      bars.forEach((bar, idx) => {
+        bar.style.background = (idx < step - 1) ? "#2563eb" : "#e0e7ff";
+      });
+      window.scrollTo({top:0, behavior:'smooth'});
+    }
+    function nextStep() {
+      // Validate current step
+      const card = document.querySelector('.step-card.active');
+      const inputs = card.querySelectorAll('input, select');
+      for (let el of inputs) {
+        if (el.offsetParent !== null && !el.checkValidity()) {
+          el.reportValidity();
+          return;
+        }
+      }
+      if (currentStep < 4) showStep(currentStep + 1);
+    }
+    function prevStep() { if (currentStep > 1) showStep(currentStep - 1); }
+
+    // --- Location Data Logic ---
+    let locationData = null;
+    async function loadLocationData() {
+      if(locationData) return locationData;
+      try {
+        const res = await fetch('./assets/location.json');
+        if (!res.ok) throw new Error("লোকেশন ডেটা লোড হচ্ছে না");
+        const data = await res.json();
+        locationData = data;
+        return data;
+      } catch(e) {
+        alert(e.message || "লোকেশন ডেটা লোডে সমস্যা হয়েছে");
+        return null;
+      }
+    }
+    function populateSelect(select, options, emptyLabel="-- নির্বাচন করুন --") {
+      select.innerHTML = `<option value="">${emptyLabel}</option>` +
+        options.map(o => `<option value="${o.id}" data-name="${o.name}">${o.name}</option>`).join('');
+      select.disabled = false;
+    }
+    function findById(array, id) { return array.find(obj => obj.id === id); }
+
+    // Horizontal + grid location
+    async function initHorizontalLocation(prefix) {
+      const divisionSelect = document.getElementById(`${prefix}_division`);
+      const districtSelect = document.getElementById(`${prefix}_district`);
+      const upazilaSelect = document.getElementById(`${prefix}_upazila`);
+      const unionSelect = document.getElementById(`${prefix}_union`);
+      const villageSelect = document.getElementById(`${prefix}_village`);
+      const postSelect = document.getElementById(`${prefix}_post`);
+      const grid = document.getElementById(`${prefix}_grid`);
+      const progress = document.getElementById(`${prefix}_location_progress`);
+      // Load data
+      const data = await loadLocationData();
+      if (!data) return;
+      // Division
+      populateSelect(divisionSelect, data.divisions, "-- বিভাগ নির্বাচন --");
+      districtSelect.disabled = true;
+      upazilaSelect.disabled = true;
+      unionSelect.disabled = true;
+      villageSelect.disabled = true;
+      postSelect.disabled = true;
+      progress.style.width = "0%";
+      // Division
+      divisionSelect.addEventListener("change", function() {
+        const division = findById(data.divisions, divisionSelect.value);
+        if (division) {
+          populateSelect(districtSelect, division.districts || [], "-- জেলা নির্বাচন --");
+          districtSelect.disabled = false;
+          upazilaSelect.disabled = true;
+          unionSelect.disabled = true; villageSelect.disabled = true; postSelect.disabled = true;
+          grid.classList.add("hidden");
+          progress.style.width = "33%";
+        } else {
+          districtSelect.disabled = true; upazilaSelect.disabled = true; progress.style.width = "0%";
+        }
+      });
+      // District
+      districtSelect.addEventListener("change", function() {
+        const division = findById(data.divisions, divisionSelect.value);
+        const district = division && findById(division.districts, districtSelect.value);
+        if (district) {
+          populateSelect(upazilaSelect, district.upazilas || [], "-- থানা নির্বাচন --");
+          upazilaSelect.disabled = false;
+          unionSelect.disabled = true; villageSelect.disabled = true; postSelect.disabled = true;
+          grid.classList.add("hidden");
+          progress.style.width = "66%";
+        } else {
+          upazilaSelect.disabled = true; progress.style.width = "33%";
+        }
+      });
+      // Upazila
+      upazilaSelect.addEventListener("change", function() {
+        const division = findById(data.divisions, divisionSelect.value);
+        const district = division && findById(division.districts, districtSelect.value);
+        const upazila = district && findById(district.upazilas, upazilaSelect.value);
+        if (upazila) {
+          populateSelect(unionSelect, upazila.unions || [], "-- ইউনিয়ন নির্বাচন --");
+          unionSelect.disabled = false; villageSelect.disabled = true; postSelect.disabled = true;
+          grid.classList.remove("hidden");
+          progress.style.width = "100%";
+        } else {
+          unionSelect.disabled = true; grid.classList.add("hidden"); progress.style.width = "66%";
+        }
+      });
+      // Union
+      unionSelect.addEventListener("change", function() {
+        const division = findById(data.divisions, divisionSelect.value);
+        const district = division && findById(division.districts, districtSelect.value);
+        const upazila = district && findById(district.upazilas, upazilaSelect.value);
+        const union = upazila && findById(upazila.unions, unionSelect.value);
+        if (union) {
+          populateSelect(villageSelect, union.villages || [], "-- গ্রাম নির্বাচন --");
+          villageSelect.disabled = false; postSelect.disabled = true;
+        } else { villageSelect.disabled = true; postSelect.disabled = true; }
+      });
+      // Village
+      villageSelect.addEventListener("change", function() {
+        const division = findById(data.divisions, divisionSelect.value);
+        const district = division && findById(division.districts, districtSelect.value);
+        const upazila = district && findById(district.upazilas, upazilaSelect.value);
+        const union = upazila && findById(upazila.unions, unionSelect.value);
+        const village = union && findById(union.villages, villageSelect.value);
+        if (village) {
+          populateSelect(postSelect, village.post_offices || [], "-- পোস্ট নির্বাচন --");
+          postSelect.disabled = false;
+        } else postSelect.disabled = true;
+      });
+    }
+
+    // জমির তথ্য
+    async function loadLandLocation(count) {
+      const divisionSelect = document.getElementById(`land_division_${count}`);
+      const districtSelect = document.getElementById(`land_district_${count}`);
+      const upazilaSelect = document.getElementById(`land_upazila_${count}`);
+      const districtWrapper = document.getElementById(`land_district_wrapper_${count}`);
+      const upazilaWrapper = document.getElementById(`land_upazila_wrapper_${count}`);
+      const data = await loadLocationData();
+      if (!data) return;
+      populateSelect(divisionSelect, data.divisions, "-- বিভাগ নির্বাচন --");
+      divisionSelect.addEventListener("change", function() {
+        const division = findById(data.divisions, divisionSelect.value);
+        populateSelect(districtSelect, division && division.districts || [], "-- জেলা নির্বাচন --");
+        districtWrapper.classList.remove("hidden"); districtWrapper.classList.add("fade-in");
+        upazilaWrapper.classList.add("hidden");
+      });
+      districtSelect.addEventListener("change", function() {
+        const division = findById(data.divisions, divisionSelect.value);
+        const district = division && findById(division.districts, districtSelect.value);
+        populateSelect(upazilaSelect, district && district.upazilas || [], "-- থানা নির্বাচন --");
+        upazilaWrapper.classList.remove("hidden"); upazilaWrapper.classList.add("fade-in");
+      });
+    }
+    // জমির তথ্য যোগ করার ফাংশন
+    let landCount = 0;
+    function addLandForm() {
+      landCount++;
+      const container = document.getElementById("landFormsContainer");
+      const div = document.createElement("div");
+      div.className = "section";
+      div.style.marginTop = "11px";
+      div.id = `landForm${landCount}`;
+      div.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <h3 style="margin:0;font-size:1.13rem;color:#1741a6;font-weight:600;">জমির তথ্য ${landCount}</h3>
+          <button type="button" class="remove-btn" onclick="removeLandForm(${landCount})">✖</button>
+        </div>
+        <label>বিভাগ</label>
+        <select name="land_division_${landCount}" id="land_division_${landCount}" required></select>
+        <div id="land_district_wrapper_${landCount}" class="hidden fade">
+          <label>জেলা</label>
+          <select name="land_district_${landCount}" id="land_district_${landCount}" required></select>
+        </div>
+        <div id="land_upazila_wrapper_${landCount}" class="hidden fade">
+          <label>থানা</label>
+          <select name="land_upazila_${landCount}" id="land_upazila_${landCount}" required></select>
+        </div>
+        <div id="land_survey_type_wrapper_${landCount}" class="hidden fade">
+          <label>সার্ভের ধরন</label>
+          <select name="land_survey_type_${landCount}" id="land_survey_type_${landCount}" required>
+            <option value="">-- সার্ভের ধরন নির্বাচন --</option>
+            <option value="RS">আর এস</option>
+            <option value="CS">সি এস</option>
+            <option value="SA">এস এ</option>
+          </select>
+        </div>
+        <div id="land_jl_no_wrapper_${landCount}" class="hidden fade">
+          <label>খতিয়ান নম্বর</label>
+          <input type="text" name="land_jl_no_${landCount}" id="land_jl_no_${landCount}" required placeholder="খতিয়ান নম্বর লিখুন">
+        </div>
+        <div id="land_el_no_wrapper_${landCount}" class="hidden fade">
+          <label>এল নং</label>
+          <input type="text" name="land_el_no_${landCount}" id="land_el_no_${landCount}" required placeholder="এল নং লিখুন">
+        </div>
+        <label>দাগ নম্বর</label>
+        <input type="text" name="land_dag_no_${landCount}" required placeholder="দাগ নম্বর লিখুন">
+        <label>মাপ (শতাংশ)</label>
+        <input type="text" name="land_measure_${landCount}" required placeholder="মাপ (শতাংশ)">
+      `;
+      container.appendChild(div);
+      loadLandLocation(landCount);
+      const upazilaSelect = document.getElementById(`land_upazila_${landCount}`);
+      const surveyTypeWrapper = document.getElementById(`land_survey_type_wrapper_${landCount}`);
+      const surveyTypeSelect = document.getElementById(`land_survey_type_${landCount}`);
+      const jlNoWrapper = document.getElementById(`land_jl_no_wrapper_${landCount}`);
+      const elNoWrapper = document.getElementById(`land_el_no_wrapper_${landCount}`);
+      upazilaSelect.addEventListener("change", () => {
+        surveyTypeWrapper.classList.remove("hidden"); surveyTypeWrapper.classList.add("fade-in");
+        jlNoWrapper.classList.add("hidden"); elNoWrapper.classList.add("hidden");
+      });
+      surveyTypeSelect.addEventListener("change", () => {
+        if(surveyTypeSelect.value) {
+          jlNoWrapper.classList.remove("hidden"); jlNoWrapper.classList.add("fade-in");
+          elNoWrapper.classList.remove("hidden"); elNoWrapper.classList.add("fade-in");
+        }
+      });
+    }
+    function removeLandForm(id) {
+      const el = document.getElementById(`landForm${id}`);
+      if(el) el.remove();
+    }
+
+    // Select box text value handling
+    function addHiddenTextField(select) {
+      let old = select.form.querySelector(`input[name="${select.name}_text"]`);
+      if (old) old.remove();
+      let hidden = document.createElement('input');
+      hidden.type = 'hidden';
+      hidden.name = select.name + "_text";
+      hidden.value = select.options[select.selectedIndex].text || "";
+      select.form.appendChild(hidden);
+    }
+    function handleSelectWithText(select) {
+      addHiddenTextField(select);
+      select.addEventListener('change', function() {
+        addHiddenTextField(this);
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+      initHorizontalLocation("giver");
+      initHorizontalLocation("receiver");
+      addLandForm();
+      setTimeout(function() {
+        document.querySelectorAll('select').forEach(handleSelectWithText);
+      }, 700);
+    });
+  </script>
+</body>
+</html>
